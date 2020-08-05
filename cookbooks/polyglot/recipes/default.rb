@@ -108,8 +108,14 @@ execute 'go get github.com/streadway/amqp' do
   cwd '/home/vagrant/project/api/go/src/main'
   command '/usr/bin/go get github.com/streadway/amqp'
 end
-# try running app with a bash resource
 
+# install node modules 
+execute 'npm install' do 
+  cwd '/home/vagrant/project/client'
+  command '/usr/bin/npm install'
+end
+
+# try running app with a bash resource
 bash 'start react app' do 
   user 'root'
   cwd '/home/vagrant/project/client'
