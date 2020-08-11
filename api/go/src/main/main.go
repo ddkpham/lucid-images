@@ -7,7 +7,7 @@ import (
 
 func main() {
     fmt.Println("Hello World!")
-    fileName := "train.jpg"
+    fileName := "argument.png"
     // jpeg images
     format, err := image.GuessImageFormat(fileName)
     if err != nil {
