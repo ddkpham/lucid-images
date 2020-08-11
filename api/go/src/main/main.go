@@ -7,7 +7,7 @@ import (
 
 func main() {
     fmt.Println("Hello World!")
-    fileName := "argument.png"
+    fileName := "train.jpg"
     // jpeg images
     format, err := image.GuessImageFormat(fileName)
     if err != nil {
@@ -15,7 +15,7 @@ func main() {
     }
     fmt.Println(format)
 
-    image.YUVHistogramEquilization(fileName)
+    image.HSLHistogramEquilization(fileName)
 
     // png images
 
