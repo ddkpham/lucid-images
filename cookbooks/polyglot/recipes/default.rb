@@ -109,6 +109,12 @@ execute 'go get github.com/streadway/amqp' do
   command '/usr/bin/go get github.com/streadway/amqp'
 end
 
+# install image/webp 
+execute 'go get golang.org/x/image/webp' do 
+  cwd '/home/vagrant/project/api/go/src/main'
+  command '/usr/bin/go get golang.org/x/image/webp'
+end
+
 # install node modules 
 execute 'npm install' do 
   cwd '/home/vagrant/project/client'
