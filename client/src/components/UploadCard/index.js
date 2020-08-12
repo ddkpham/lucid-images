@@ -7,6 +7,8 @@ import CardContent from "@material-ui/core/CardContent";
 import CardMedia from "@material-ui/core/CardMedia";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
+import { apiURL } from "../../config";
+import { postCall } from "../../apiCalls";
 import "./index.scss";
 
 const useStyles = makeStyles({
@@ -26,11 +28,19 @@ export default function ImgMediaCard() {
     setFile(file.name);
   };
 
-  const uploadImage = () => {
-    const basePath = "/home/vagrant/project/images";
-    const fullPathToImage = `${basePath}/${file}`;
-    setCurrImage(fullPathToImage);
-    console.log("uploadImage -> fullPathToImage", fullPathToImage);
+  const uploadImage = async () => {
+    const url = `${apiURL}/enhance`;
+    const body = { image: file };
+    try {
+      const response = await postCall(url, body);
+      const payload = await response.json();
+      console.log("uploadImage -> payload", payload);
+    } catch (err) {
+      console.log("error in enhancing image", err);
+    }
+
+    console.log("uploadImage -> url", url);
+    console.log("uploadImage -> image", file);
   };
 
   return (

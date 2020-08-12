@@ -103,6 +103,11 @@ execute 'pip3 install flask' do
   command '/usr/bin/pip3 install flask'
 end
 
+# install flask cors 
+execute 'pip3 install flask' do 
+  command '/usr/bin/pip3 install flask-cors'
+end
+
 #set the root directory of go folder as GOPATh
 execute 'export GOPATH=`pwd`' do 
   cwd '/home/vagrant/project/api/go'

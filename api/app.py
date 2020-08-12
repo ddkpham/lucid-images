@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import pika
 import uuid
 import json
@@ -42,6 +43,10 @@ rpc = DemoRpcClient()
 
 # Initialize app
 app = Flask(__name__)
+
+# Enable CORS 
+CORS(app)
+print("CORS", CORS)
 
 # Add routes 
 @app.route('/', methods=['GET'])
