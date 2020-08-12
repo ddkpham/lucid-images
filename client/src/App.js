@@ -3,6 +3,10 @@ import "./App.css";
 import AppBar from "./components/AppBar";
 import UploadCard from "./components/UploadCard";
 import Typography from "@material-ui/core/Typography";
+import ImageCard from "./components/ImageCard";
+
+const enhancedImage = localStorage.getItem("enhancedImage");
+console.log("enhancedImage", enhancedImage);
 
 function App() {
   return (
@@ -15,12 +19,20 @@ function App() {
         </Typography>
         <Typography variant="h6" color="inherit">
           {" "}
-          Upload an image for histogram equalization
+          Upload an image that needs contrast improvement
         </Typography>
       </div>
       <div className="App-upload-card">
         <UploadCard />
       </div>
+      {enhancedImage ? (
+        <div className="App-enhanced-image-container">
+          <ImageCard image={enhancedImage} format={"RGB"} isOriginal={true} />
+          <ImageCard image={enhancedImage} format={"RGB"} />
+          <ImageCard image={enhancedImage} format={"YUV"} />
+          <ImageCard image={enhancedImage} format={"HSL"} />
+        </div>
+      ) : null}
     </div>
   );
 }

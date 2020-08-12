@@ -60,8 +60,8 @@ def get():
 def enhance():
     print("request", request.json)
     reqBody = request.json
-    print("requestBody ", reqBody)
     response = rpc.call({'image': reqBody['image']})
+    print("finished request! ", reqBody)
     return jsonify({'image': 'post test', 'length': '42'})
 
 # Run Server

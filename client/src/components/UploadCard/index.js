@@ -13,14 +13,16 @@ import "./index.scss";
 
 const useStyles = makeStyles({
   root: {
-    maxWidth: 345,
+    maxWidth: 500,
   },
 });
 
-export default function ImgMediaCard() {
+export default function ImgMediaCard(props) {
+  const { image } = props;
   const [file, setFile] = useState("");
+  console.log("ImgMediaCard -> file", file);
   const [currImage, setCurrImage] = useState(
-    process.env.PUBLIC_URL + "/boat.jpeg"
+    process.env.PUBLIC_URL + `/${image}`
   );
   console.log("ImgMediaCard -> currImage", currImage);
   const classes = useStyles();
@@ -30,21 +32,29 @@ export default function ImgMediaCard() {
     const fileObject = event.target.files[0];
     setFile(fileObject.name);
     setCurrImage(`${process.env.PUBLIC_URL}/${fileObject.name}`);
+
+    // clear enhanced image
+    localStorage.removeItem("enhancedImage");
   };
 
   const uploadImage = async () => {
     const url = `${apiURL}/enhance`;
     const body = { image: file };
-    try {
-      const response = await postCall(url, body);
-      const payload = await response.json();
-      console.log("uploadImage -> payload", payload);
-    } catch (err) {
-      console.log("error in enhancing image", err);
-    }
+    if (file) {
+      try {
+        localStorage.setItem("enhancedImage", file);
+        const response = await postCall(url, body);
+        const payload = await response.json();
+        console.log("uploadImage -> payload", payload);
 
-    console.log("uploadImage -> url", url);
-    console.log("uploadImage -> image", file);
+        // set enhancedImage in localstorage
+      } catch (err) {
+        // localStorage.removeItem("enhancedImage");
+        console.log("error in enhancing image", err);
+      }
+    } else {
+      alert("Please select a file");
+    }
   };
 
   return (
@@ -53,14 +63,15 @@ export default function ImgMediaCard() {
         <CardMedia
           component="img"
           alt="Image to be enhanced"
-          height="140"
+          height="300"
           image={currImage}
           title="Image to be enhanced"
+          className="uploadcard-original-img"
         />
         <CardContent>
           <Typography gutterBottom variant="h5" component="h2">
-            Please select files in the images folder of the project root
-            directory.
+            Please select images from the $root/client/public folder. Feel free
+            to add your own jpeg/png images.
           </Typography>
           <input type="file" onChange={fileSelectedHandler} />
         </CardContent>
@@ -76,3 +87,7 @@ export default function ImgMediaCard() {
     </Card>
   );
 }
+
+ImgMediaCard.defaultProps = {
+  image: "welcome.jpg",
+};
