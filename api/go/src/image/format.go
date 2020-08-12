@@ -1,6 +1,7 @@
 package image
 
 import (
+	"fmt"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -14,10 +15,16 @@ import (
 func getFullPath(fileName string) string {
 	imageDir := "/src/image/"
 	workDir, err := os.Getwd()
+	fmt.Println("workDir: ", workDir)
 	if err != nil {
 		panic(err)
 	}
-	imgPath := workDir + imageDir + fileName
+	imgPath := workDir + imageDir + fileName // locally
+	if workDir == "/home/vagrant/project/api/go/src/main" { // in VM
+		imgPath = "/home/vagrant/project/api/go/src/image/" + fileName
+	}
+	// for when rabbit mq fails but still needs to process jobs
+	//imgPath = "/home/vagrant/project/api/go/src/image/chain.png"
 	return imgPath
 }
 

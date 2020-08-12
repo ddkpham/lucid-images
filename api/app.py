@@ -46,9 +46,17 @@ app = Flask(__name__)
 # Add routes 
 @app.route('/', methods=['GET'])
 def get():
-  response = rpc.call({'string': 'hello darkness my old friend'})
+  response = rpc.call({'image': 'argument.png'})
   print(response['length'])
-  return jsonify({'msg': 'Hello World', 'length': response['length']})
+  return jsonify({'image': 'Hello World', 'length': response['length']})
+
+# Image contrast enhancement route 
+@app.route('/enhance', methods=['POST'])
+def enhance():
+    print("request", request.json)
+    reqBody = request.json
+    response = rpc.call({'image': reqBody['image']})
+    return jsonify({'image': 'post test', 'length': '42'})
 
 # Run Server
 if __name__ == '__main__':

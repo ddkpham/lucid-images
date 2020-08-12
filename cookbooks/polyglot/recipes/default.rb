@@ -103,13 +103,19 @@ execute 'pip3 install flask' do
   command '/usr/bin/pip3 install flask'
 end
 
+#set the root directory of go folder as GOPATh
+execute 'export GOPATH=`pwd`' do 
+  cwd '/home/vagrant/project/api/go'
+  command 'export GOPATH=`pwd`'
+end
+
 # install rabit mq 
 execute 'go get github.com/streadway/amqp' do 
   cwd '/home/vagrant/project/api/go/src/main'
   command '/usr/bin/go get github.com/streadway/amqp'
 end
 
-# install image/webp 
+# install image/webp for webp decoding
 execute 'go get golang.org/x/image/webp' do 
   cwd '/home/vagrant/project/api/go/src/main'
   command '/usr/bin/go get golang.org/x/image/webp'

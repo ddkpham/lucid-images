@@ -1,7 +1,6 @@
 package image
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -157,7 +156,7 @@ func HSLHistogramEquilization(fileName string){
 	}
 
 	bounds := decodedImg.Bounds()
-	fmt.Println("bounds: ", bounds)
+
 	// convert image from rgb to yuv
 	imgSize := bounds.Max.X * bounds.Max.Y
 	h_img := make([]float32, imgSize)
@@ -189,7 +188,6 @@ func HSLHistogramEquilization(fileName string){
 
 	// get l look up table
 	lLUT := getLookUpTable(l_hist, imgSize)
-	fmt.Println("l look up table: ", lLUT)
 
 	//generate new contrast enhanced image with y Look up tables
 	w, h := bounds.Max.X , bounds.Max.Y
@@ -239,7 +237,7 @@ func YUVHistogramEquilization(fileName string){
 	}
 
 	bounds := decodedImg.Bounds()
-	fmt.Println("bounds: ", bounds)
+
 	// convert image from rgb to yuv
 	imgSize := bounds.Max.X * bounds.Max.Y
 	y_img := make([]uint8, imgSize)
@@ -270,7 +268,6 @@ func YUVHistogramEquilization(fileName string){
 	}
 
 	yLUT := getLookUpTable(y_hist, imgSize)
-	fmt.Println("y look up table: ", yLUT)
 
 	//generate new contrast enhanced image with y Look up tables
 	w, h := bounds.Max.X , bounds.Max.Y
@@ -318,18 +315,15 @@ func RGBHistogramEquilization(fileName string){
 	}
 
 	bounds := decodedImg.Bounds()
-	fmt.Println("bounds: ", bounds)
 
 	// An image's bounds do not necessarily start at (0, 0), so the two loops start
 	// at bounds.Min.Y and bounds.Min.X. Looping over Y first and X second is more
 	// likely to result in better memory access patterns than X first and Y second.
 	// https://golang.org/pkg/image/
 	// generate histogram for each RGB channel.
-	count := 0
 	rHistogram, gHistogram, bHistogram := [256]uint32{}, [256]uint32{}, [256]uint32{}
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			count++
 			r, g, b, a := decodedImg.At(x, y).RGBA()
 			// A color's RGBA method returns values in the range [0, 65535].
 			// Shifting by 8 reduces this to the range [0, 255].
@@ -339,12 +333,10 @@ func RGBHistogramEquilization(fileName string){
 			bHistogram[b]++
 		}
 	}
-	fmt.Println("count: ", count)
 
 	// construct the Look Up Table by calculating the CDF
 	imgSize := bounds.Max.Y * bounds.Max.X
 	rLUT := getLookUpTable(rHistogram, imgSize)
-	fmt.Println("look up table: ", rLUT)
 	gLUT := getLookUpTable(gHistogram, imgSize)
 	bLUT := getLookUpTable(bHistogram, imgSize)
 
@@ -367,7 +359,7 @@ func RGBHistogramEquilization(fileName string){
 		}
 	}
 
-	f, err := os.Create("enhanced-" + fileName )
+	f, err := os.Create("enhanced-RGB-" + fileName )
 	if err != nil {
 		panic(err)
 	}
@@ -379,19 +371,16 @@ func RGBHistogramEquilization(fileName string){
 		panic(err)
 	}
 	//// Print the results.
-
 }
 
 
 func getLookUpTable(histogram [256]uint32, imageSize int) [256]uint8 {
 	// construct look up table by caluclating CDF
-	fmt.Println("histogram: ", histogram)
-	fmt.Println("imageSize: ", imageSize)
 	sum := uint64(0)
 	for _, val := range histogram {
 		sum += uint64(val)
 	}
-	fmt.Println("sum ", sum)
+
 	cdf := uint32(0)
 	min := uint32(0)
 	i := 0
@@ -425,6 +414,5 @@ func getLookUpTable(histogram [256]uint32, imageSize int) [256]uint8 {
 		}
 		lut_sum += lut[i]
 	}
-	fmt.Println("lut sum: ", lut_sum)
 	return lut
 }

@@ -16,7 +16,7 @@ func failOnError(err error, msg string) {
 }
 
 func get_length(request map[string]string) map[string]int {
-	s := request["string"]
+	s := request["image"]
 	return map[string]int{"length": len(s)}
 }
 
@@ -66,6 +66,7 @@ func main() {
 			failOnError(err, "Failed to convert body")
 
 			log.Printf("%s", request)
+			ContrastEnhancement(request["image"])
 			response := get_length(request)
 			body, _ := json.Marshal(response)
 
