@@ -4,16 +4,16 @@ import (
 	"fmt"
 )
 
-func ContrastEnhancement(fileName string){
+func ContrastEnhancement(fileName string, isLocal bool){
 	fmt.Println("Enhancing contrast with...", fileName)
 
 	// RGB
-	image.RGBHistogramEquilization(fileName)
+	image.RGBHistogramEquilization(fileName, isLocal)
 
 	// YUV
-	image.YUVHistogramEquilization(fileName)
+	image.YUVHistogramEquilization(fileName, isLocal)
 
 	// HSL
-	image.HSLHistogramEquilization(fileName)
+	image.HSLHistogramEquilization(fileName, isLocal)
 
 }

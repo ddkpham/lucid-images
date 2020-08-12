@@ -6,13 +6,15 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	"mime"
 	"os"
 
 	_ "golang.org/x/image/webp"
 )
 
-func getFullPath(fileName string) string {
+var VagrantImageDir string = "/home/vagrant/project/client/public/"
+var VagrantGoPath string = "/home/vagrant/project/api/go/src/main"
+
+func getFullPath(fileName string, isLocal bool) string {
 	imageDir := "/src/image/"
 	workDir, err := os.Getwd()
 	fmt.Println("workDir: ", workDir)
@@ -20,26 +22,19 @@ func getFullPath(fileName string) string {
 		panic(err)
 	}
 	imgPath := workDir + imageDir + fileName // locally
-	if workDir == "/home/vagrant/project/api/go/src/main" { // in VM
-		imgPath = "/home/vagrant/project/api/go/src/image/" + fileName
+	if !isLocal { // in VM
+		imgPath = VagrantImageDir + fileName
 	}
+	fmt.Println("full image path: ", imgPath)
 	// for when rabbit mq fails but still needs to process jobs
 	//imgPath = "/home/vagrant/project/api/go/src/image/chain.png"
 	return imgPath
 }
 
 // Guess image format from gif/jpeg/png/webp
-func GuessImageFormat(fileName string) (format string, err error) {
-	img , err := os.Open(getFullPath(fileName))
+func GuessImageFormat(fileName string, isLocal bool) (format string, err error) {
+	fullPath := getFullPath(fileName, isLocal)
+	img , err := os.Open(fullPath)
 	_, format, err = image.DecodeConfig(img)
 	return format, err
-}
-
-// Guess image mime types from gif/jpeg/png/webp
-func guessImageMimeTypes(fileName string) string {
-	format, _ := GuessImageFormat(fileName)
-	if format == "" {
-		return ""
-	}
-	return mime.TypeByExtension("." + format)
 }

@@ -142,8 +142,8 @@ func hue2rgb(var_1, var_2, var_H float32) float32{
 	return v1
 }
 
-func HSLHistogramEquilization(fileName string){
-	img, err := os.Open(getFullPath(fileName))
+func HSLHistogramEquilization(fileName string, isLocal bool){
+	img, err := os.Open(getFullPath(fileName, isLocal))
 
 	if err != nil {
 		panic(err)
@@ -210,7 +210,13 @@ func HSLHistogramEquilization(fileName string){
 
 		}
 	}
-	f, err := os.Create("enhanced-HSL-" + fileName )
+	var f *os.File
+	if isLocal {
+		f, err = os.Create("enhanced-HSL-" + fileName )
+	} else {
+		f, err = os.Create(VagrantImageDir + "enhanced-HSL-" + fileName )
+	}
+
 	if err != nil {
 		panic(err)
 	}
@@ -223,8 +229,8 @@ func HSLHistogramEquilization(fileName string){
 	}
 }
 
-func YUVHistogramEquilization(fileName string){
-	img, err := os.Open(getFullPath(fileName))
+func YUVHistogramEquilization(fileName string, isLocal bool){
+	img, err := os.Open(getFullPath(fileName, isLocal))
 
 	if err != nil {
 		panic(err)
@@ -284,7 +290,13 @@ func YUVHistogramEquilization(fileName string){
 			})
 		}
 	}
-	f, err := os.Create("enhanced-YUV-" + fileName )
+	var f *os.File
+	if isLocal {
+		f, err = os.Create("enhanced-YUV-" + fileName )
+	} else {
+		f, err = os.Create(VagrantImageDir + "enhanced-YUV-" + fileName )
+	}
+
 	if err != nil {
 		panic(err)
 	}
@@ -301,8 +313,8 @@ func YUVHistogramEquilization(fileName string){
 
 
 // RGB contrast enhancement
-func RGBHistogramEquilization(fileName string){
-	img, err := os.Open(getFullPath(fileName))
+func RGBHistogramEquilization(fileName string, isLocal bool){
+	img, err := os.Open(getFullPath(fileName, isLocal))
 
 	if err != nil {
 		panic(err)
@@ -359,7 +371,12 @@ func RGBHistogramEquilization(fileName string){
 		}
 	}
 
-	f, err := os.Create("enhanced-RGB-" + fileName )
+	var f *os.File
+	if isLocal {
+		f, err = os.Create("enhanced-RGB-" + fileName )
+	} else {
+		f, err = os.Create(VagrantImageDir + "enhanced-RGB-" + fileName )
+	}
 	if err != nil {
 		panic(err)
 	}
