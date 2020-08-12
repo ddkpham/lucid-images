@@ -19,13 +19,17 @@ const useStyles = makeStyles({
 
 export default function ImgMediaCard() {
   const [file, setFile] = useState("");
-  const [currImage, setCurrImage] = useState("");
+  const [currImage, setCurrImage] = useState(
+    process.env.PUBLIC_URL + "/boat.jpeg"
+  );
+  console.log("ImgMediaCard -> currImage", currImage);
   const classes = useStyles();
 
   const fileSelectedHandler = (event) => {
     console.log("ImgMediaCard -> event", event.target.files[0]);
-    const file = event.target.files[0];
-    setFile(file.name);
+    const fileObject = event.target.files[0];
+    setFile(fileObject.name);
+    setCurrImage(`${process.env.PUBLIC_URL}/${fileObject.name}`);
   };
 
   const uploadImage = async () => {
@@ -48,10 +52,10 @@ export default function ImgMediaCard() {
       <CardActionArea>
         <CardMedia
           component="img"
-          alt="Contemplative Reptile"
+          alt="Image to be enhanced"
           height="140"
           image={currImage}
-          title="Contemplative Reptile"
+          title="Image to be enhanced"
         />
         <CardContent>
           <Typography gutterBottom variant="h5" component="h2">
