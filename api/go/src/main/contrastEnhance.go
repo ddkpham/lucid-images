@@ -2,18 +2,31 @@ package main
 import (
 	"../image"
 	"fmt"
+	"sync"
 )
+
 
 func ContrastEnhancement(fileName string, isLocal bool){
 	fmt.Println("Enhancing contrast with...", fileName)
 
+	wg := sync.WaitGroup{}
+	wg.Add(3)
+	
+	contrastEnhancementFunc := func(fn interface{}) {
+		defer wg.Done()
+		switch fn.(type) {
+		case func(string, bool):
+			fn.(func(string,bool))(fileName, isLocal)
+		}
+	}
+
 	// RGB
-	image.RGBHistogramEquilization(fileName, isLocal)
+	go contrastEnhancementFunc(image.RGBHistogramEquilization)
 
 	// YUV
-	image.YUVHistogramEquilization(fileName, isLocal)
+	go contrastEnhancementFunc(image.YUVHistogramEquilization)
 
 	// HSL
-	image.HSLHistogramEquilization(fileName, isLocal)
+	go contrastEnhancementFunc(image.HSLHistogramEquilization)
 
 }

@@ -214,11 +214,11 @@ func HSLHistogramEquilization(fileName string, isLocal bool){
 
 		}
 	}
-	var f *os.File
-	if isLocal {
-		f, err = os.Create("enhanced-HSL-" + fileName )
-	} else {
-		f, err = os.Create(VagrantImageDir + "enhanced-HSL-" + fileName )
+
+	f , imgError := writeImage(fileName, "enhanced-HSL-", isLocal)
+	defer f.Close()
+	if imgError != nil {
+		panic(imgError)
 	}
 
 	if err != nil {
@@ -250,6 +250,8 @@ func YUVHistogramEquilization(fileName string, isLocal bool){
 
 	// convert image from rgb to yuv
 	imgSize := bounds.Max.X * bounds.Max.Y
+
+	// instead of creating a temp yuv image, lets keep track of the pixel values in arrays.
 	y_img := make([]uint8, imgSize)
 	cb_img := make([]uint8, imgSize)
 	cr_img := make([]uint8, imgSize)
@@ -260,7 +262,8 @@ func YUVHistogramEquilization(fileName string, isLocal bool){
 			// A color's RGBA method returns values in the range [0, 65535].
 			// Shifting by 8 reduces this to the range [0, 255].
 			r, g, b, a = r>>8, g>>8, b>>8, a>>8
-			// were only really interested in y for histogram equilization
+
+			// convert from rgb -> yuv / ycbcr
 			Y, cb, cr := color.RGBToYCbCr(uint8(r), uint8(g), uint8(b))
 			y_img[pixelVal(x,y, bounds)] = Y
 			cb_img[pixelVal(x,y, bounds)] = cb
@@ -269,7 +272,8 @@ func YUVHistogramEquilization(fileName string, isLocal bool){
 		}
 	}
 
-	// create histogram for y.
+	// We are actually only interested in Y channel (Luminance) for contrast enhancement.
+	// 2 chrominance components may be ignored.
 	y_hist := [256]uint32{}
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -292,25 +296,18 @@ func YUVHistogramEquilization(fileName string, isLocal bool){
 			})
 		}
 	}
-	var f *os.File
-	if isLocal {
-		f, err = os.Create("enhanced-YUV-" + fileName )
-	} else {
-		f, err = os.Create(VagrantImageDir + "enhanced-YUV-" + fileName )
-	}
 
-	if err != nil {
-		panic(err)
-	}
-
+	f , imgError := writeImage(fileName, "enhanced-YUV-", isLocal)
 	defer f.Close()
+	if imgError != nil {
+		panic(imgError)
+	}
+
 	//err = png.Encode(f, newImg)
 	err = jpeg.Encode(f, newImg, &jpeg.Options{jpeg.DefaultQuality})
 	if err != nil {
 		panic(err)
 	}
-
-
 }
 
 func createNewImage(bounds image.Rectangle) *image.RGBA64{
