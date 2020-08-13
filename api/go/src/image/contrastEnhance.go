@@ -8,6 +8,12 @@ import (
 
 func ContrastEnhancement(fileName string, isLocal bool){
 	fmt.Println("Enhancing contrast with...", fileName)
+	format, _ := GuessImageFormat(fileName, true)
+
+	if !(format == "jpeg" || format == "png") {
+		fmt.Println("file must be png or jpeg")
+		return
+	}
 
 	wg := sync.WaitGroup{}
 	wg.Add(3)

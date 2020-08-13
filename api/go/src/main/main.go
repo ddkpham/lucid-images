@@ -7,7 +7,7 @@ import (
 
 func main() {
     fmt.Println("Running enhancement!")
-    fileName := "boat.jpeg"
+    fileName := "argument.png"
     // jpeg images
     format, err := image.GuessImageFormat(fileName, true)
     if err != nil {
@@ -20,5 +20,4 @@ func main() {
     image.HSLHistogramEquilization(fileName, true)
 
     // png images
-
 }

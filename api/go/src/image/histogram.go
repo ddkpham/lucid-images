@@ -163,7 +163,7 @@ func HSLHistogramEquilization(fileName string, isLocal bool){
 
 	bounds := decodedImg.Bounds()
 
-	// convert image from rgb to yuv
+	// convert image from rgb to hsl, storing pixel values in arrays instead of temp Image
 	imgSize := bounds.Max.X * bounds.Max.Y
 	h_img := make([]float32, imgSize)
 	s_img := make([]float32, imgSize)
@@ -175,16 +175,16 @@ func HSLHistogramEquilization(fileName string, isLocal bool){
 			// A color's RGBA method returns values in the range [0, 65535].
 			// Shifting by 8 reduces this to the range [0, 255].
 			r, g, b, a = r>>8, g>>8, b>>8, a>>8
-			// were only really interested in y for histogram equilization
+
 			h, s, l := rgb2hsl(uint8(r), uint8(g), uint8(b))
 			h_img[pixelVal(x,y, bounds)] = h
 			s_img[pixelVal(x,y, bounds)] = s
 			l_img[pixelVal(x,y, bounds)] = l
-			a_img[pixelVal(x,y, bounds)] = uint8(a)
+			a_img[pixelVal(x,y, bounds)] = uint8(a) // save for later.
 		}
 	}
 
-	// create a l histogram
+	// create a lightness histogram
 	l_hist := [256]uint32{}
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -192,10 +192,10 @@ func HSLHistogramEquilization(fileName string, isLocal bool){
 		}
 	}
 
-	// get l look up table
+	// get lightness look up table
 	lLUT := getLookUpTable(l_hist, imgSize)
 
-	//generate new contrast enhanced image with y Look up tables
+	//generate new contrast enhanced image with lightness Look up tables
 	newImg := createNewImage(bounds)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -203,15 +203,16 @@ func HSLHistogramEquilization(fileName string, isLocal bool){
 			r,g,b := hsl2rgb(
 				h_img[pixelVal(x,y,bounds)],
 				s_img[pixelVal(x,y,bounds)],
-				lLUT[l_img[pixelVal(x,y,bounds)]],
+				lLUT[l_img[pixelVal(x,y,bounds)]],  // new lightness value
 				)
+
+
 			newImg.Set(x,y, color.RGBA{
 				R: r,
 				G: g,
 				B: b,
 				A: a_img[pixelVal(x,y, bounds)],
 			})
-
 		}
 	}
 
@@ -226,7 +227,6 @@ func HSLHistogramEquilization(fileName string, isLocal bool){
 	}
 
 	defer f.Close()
-	//err = png.Encode(f, newImg)
 	err = jpeg.Encode(f, newImg, &jpeg.Options{jpeg.DefaultQuality})
 	if err != nil {
 		panic(err)
