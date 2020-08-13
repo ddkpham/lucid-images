@@ -7,7 +7,7 @@ import (
 
 func main() {
     fmt.Println("Running enhancement!")
-    fileName := "train.jpg"
+    fileName := "boat.jpeg"
     // jpeg images
     format, err := image.GuessImageFormat(fileName, true)
     if err != nil {
@@ -16,6 +16,8 @@ func main() {
     fmt.Println(format)
 
     image.YUVHistogramEquilization(fileName, true)
+    image.RGBHistogramEquilization(fileName, true)
+    image.HSLHistogramEquilization(fileName, true)
 
     // png images
 

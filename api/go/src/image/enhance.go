@@ -46,9 +46,10 @@ func rgb2hsl(r,g,b uint8) (h,s float32 ,l uint8) {
 	gScaled := float32(g) / 255
 	bScaled := float32(b) / 255
 
-	// find min & max of 3 rgb values
+	// find min & max of the rgb values
 	min := minimum(rScaled, gScaled, bScaled)
 	max := maximum(rScaled, gScaled, bScaled)
+
 	deltaMax := max - min
 	lTemp = (max + min) / 2
 	if deltaMax == 0 { // Gray value. There is no chroma
@@ -142,8 +143,13 @@ func hue2rgb(var_1, var_2, var_H float32) float32{
 	return v1
 }
 
+func openImage(fileName string, isLocal bool) (*os.File, error){
+	imagePath := getFullPath(fileName, isLocal)
+	return os.Open(imagePath)
+}
+
 func HSLHistogramEquilization(fileName string, isLocal bool){
-	img, err := os.Open(getFullPath(fileName, isLocal))
+	img, err := openImage(fileName, isLocal)
 
 	if err != nil {
 		panic(err)
@@ -190,9 +196,7 @@ func HSLHistogramEquilization(fileName string, isLocal bool){
 	lLUT := getLookUpTable(l_hist, imgSize)
 
 	//generate new contrast enhanced image with y Look up tables
-	w, h := bounds.Max.X , bounds.Max.Y
-	rect := image.Rect(0,0,w, h)
-	newImg := image.NewRGBA64(rect)
+	newImg := createNewImage(bounds)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			// convert back to rgb with hsl values
@@ -230,7 +234,7 @@ func HSLHistogramEquilization(fileName string, isLocal bool){
 }
 
 func YUVHistogramEquilization(fileName string, isLocal bool){
-	img, err := os.Open(getFullPath(fileName, isLocal))
+	img, err := openImage(fileName, isLocal)
 
 	if err != nil {
 		panic(err)
@@ -276,9 +280,7 @@ func YUVHistogramEquilization(fileName string, isLocal bool){
 	yLUT := getLookUpTable(y_hist, imgSize)
 
 	//generate new contrast enhanced image with y Look up tables
-	w, h := bounds.Max.X , bounds.Max.Y
-	rect := image.Rect(0,0,w, h)
-	newImg := image.NewRGBA64(rect)
+	newImg := createNewImage(bounds)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			r,g,b := color.YCbCrToRGB(yLUT[y_img[pixelVal(x,y, bounds)]], cb_img[pixelVal(x,y, bounds)], cr_img[pixelVal(x,y, bounds)])
@@ -311,10 +313,16 @@ func YUVHistogramEquilization(fileName string, isLocal bool){
 
 }
 
+func createNewImage(bounds image.Rectangle) *image.RGBA64{
+	width, height := bounds.Max.X , bounds.Max.Y
+	rect := image.Rect(0,0,width, height)
+	newImg := image.NewRGBA64(rect)
+	return newImg
+}
 
 // RGB contrast enhancement
 func RGBHistogramEquilization(fileName string, isLocal bool){
-	img, err := os.Open(getFullPath(fileName, isLocal))
+	img, err := openImage(fileName, isLocal)
 
 	if err != nil {
 		panic(err)
@@ -328,17 +336,20 @@ func RGBHistogramEquilization(fileName string, isLocal bool){
 
 	bounds := decodedImg.Bounds()
 
+	// generate histogram for each RGB channel.
+	rHistogram, gHistogram, bHistogram := [256]uint32{}, [256]uint32{}, [256]uint32{}
+
 	// An image's bounds do not necessarily start at (0, 0), so the two loops start
 	// at bounds.Min.Y and bounds.Min.X. Looping over Y first and X second is more
 	// likely to result in better memory access patterns than X first and Y second.
 	// https://golang.org/pkg/image/
-	// generate histogram for each RGB channel.
-	rHistogram, gHistogram, bHistogram := [256]uint32{}, [256]uint32{}, [256]uint32{}
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			r, g, b, a := decodedImg.At(x, y).RGBA()
+
 			// A color's RGBA method returns values in the range [0, 65535].
 			// Shifting by 8 reduces this to the range [0, 255].
+			// 2^16 / 2^8 -> 2^8
 			r, g, b, a = r>>8, g>>8, b>>8, a>>8
 			rHistogram[r]++
 			gHistogram[g]++
@@ -346,21 +357,17 @@ func RGBHistogramEquilization(fileName string, isLocal bool){
 		}
 	}
 
-	// construct the Look Up Table by calculating the CDF
+	// construct the Look Up Table for rgb values
 	imgSize := bounds.Max.Y * bounds.Max.X
 	rLUT := getLookUpTable(rHistogram, imgSize)
 	gLUT := getLookUpTable(gHistogram, imgSize)
 	bLUT := getLookUpTable(bHistogram, imgSize)
 
 	//generate new contrast enhanced image with Look up tables
-	w, h := bounds.Max.X , bounds.Max.Y
-	rect := image.Rect(0,0,w, h)
-	newImg := image.NewRGBA64(rect)
+	newImg := createNewImage(bounds)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			r, g, b, a := decodedImg.At(x, y).RGBA()
-			// A color's RGBA method returns values in the range [0, 65535].
-			// Shifting by 8 reduces this to the range [0, 255].
 			r, g, b, a = r>>8, g>>8, b>>8, a>>8
 			newImg.Set(x,y, color.RGBA{
 				R: rLUT[r],
@@ -371,26 +378,31 @@ func RGBHistogramEquilization(fileName string, isLocal bool){
 		}
 	}
 
-	var f *os.File
-	if isLocal {
-		f, err = os.Create("enhanced-RGB-" + fileName )
-	} else {
-		f, err = os.Create(VagrantImageDir + "enhanced-RGB-" + fileName )
-	}
-	if err != nil {
-		panic(err)
+	f , imgError := writeImage(fileName, "enhanced-RGB-", isLocal)
+	defer f.Close()
+	if imgError != nil {
+		panic(imgError)
 	}
 
-	defer f.Close()
 	//err = png.Encode(f, newImg)
 	err = jpeg.Encode(f, newImg, &jpeg.Options{jpeg.DefaultQuality})
 	if err != nil {
 		panic(err)
 	}
-	//// Print the results.
 }
 
+func writeImage(fileName string,  prefix string, isLocal bool,) (*os.File, error) {
+	var f *os.File
+	var err error
+	if isLocal {
+		f, err = os.Create(prefix + fileName )
+	} else {
+		f, err = os.Create(VagrantImageDir + prefix + fileName )
+	}
+	return f, err
+}
 
+// create conversion values by constructing look up table with CDF
 func getLookUpTable(histogram [256]uint32, imageSize int) [256]uint8 {
 	// construct look up table by caluclating CDF
 	sum := uint64(0)
@@ -401,7 +413,6 @@ func getLookUpTable(histogram [256]uint32, imageSize int) [256]uint8 {
 	cdf := uint32(0)
 	min := uint32(0)
 	i := 0
-
 
 	// find first non-zero value in histogram
 	for {
@@ -421,6 +432,7 @@ func getLookUpTable(histogram [256]uint32, imageSize int) [256]uint8 {
 		mappedValue := (float64(cdf) - float64(min))*255/d + 0.5
 		scaledValue := uint8(mappedValue)
 		lut[i] = scaledValue
+
 		// trim off any values over 255 and under 0
 		if lut[i] < 0 {
 			lut[i] = 0
