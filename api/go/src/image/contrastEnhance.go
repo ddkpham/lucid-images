@@ -1,6 +1,6 @@
-package main
+package image
+
 import (
-	"../image"
 	"fmt"
 	"sync"
 )
@@ -11,7 +11,7 @@ func ContrastEnhancement(fileName string, isLocal bool){
 
 	wg := sync.WaitGroup{}
 	wg.Add(3)
-	
+
 	contrastEnhancementFunc := func(fn interface{}) {
 		defer wg.Done()
 		switch fn.(type) {
@@ -21,12 +21,15 @@ func ContrastEnhancement(fileName string, isLocal bool){
 	}
 
 	// RGB
-	go contrastEnhancementFunc(image.RGBHistogramEquilization)
+	go contrastEnhancementFunc(RGBHistogramEquilization)
 
 	// YUV
-	go contrastEnhancementFunc(image.YUVHistogramEquilization)
+	go contrastEnhancementFunc(YUVHistogramEquilization)
 
 	// HSL
-	go contrastEnhancementFunc(image.HSLHistogramEquilization)
+	go contrastEnhancementFunc(HSLHistogramEquilization)
+
+
+	wg.Wait()
 
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"github.com/streadway/amqp"
 	"log"
+	"../image"
 )
 
 func failOnError(err error, msg string) {
@@ -66,7 +67,7 @@ func main() {
 			failOnError(err, "Failed to convert body")
 
 			log.Printf("%s", request)
-			ContrastEnhancement(request["image"], false)
+			image.ContrastEnhancement(request["image"], false)
 			response := get_length(request)
 			body, _ := json.Marshal(response)
 
