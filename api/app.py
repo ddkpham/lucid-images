@@ -9,7 +9,9 @@ import os
 
 class DemoRpcClient(object):
     def __init__(self):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        # step 1. Connect to RabbitMQ with paramters and set up a simple non-asynchronous channel
+        # increase rabbit heart beat and blocked connection timeout 
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', heartbeat=600))
         self.channel = self.connection.channel()
 
         result = self.channel.queue_declare(queue='', exclusive=True)
