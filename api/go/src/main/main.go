@@ -15,9 +15,7 @@ func main() {
     }
     fmt.Println(format)
 
-    image.YUVHistogramEquilization(fileName, true)
-    image.RGBHistogramEquilization(fileName, true)
-    image.HSLHistogramEquilization(fileName, true)
+    image.ContrastEnhancement(fileName, true)
 
     // png images
 }

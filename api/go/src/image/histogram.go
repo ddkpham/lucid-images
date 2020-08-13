@@ -4,12 +4,17 @@ import (
 	"image"
 	"image/color"
 	"image/jpeg"
+	"sync"
+
 	//"image/color"
 	_ "image/jpeg"
 	//"image/png"
 	"os"
 )
 
+
+
+var numThreads int = 4
 func pixelVal(x, y int, rectangle image.Rectangle) uint {
 	return uint(y * rectangle.Max.X + x)
 }
@@ -148,7 +153,136 @@ func openImage(fileName string, isLocal bool) (*os.File, error){
 	return os.Open(imagePath)
 }
 
-func HSLHistogramEquilization(fileName string, isLocal bool){
+func min(x, y int) int{
+	if x < y {
+		return x
+	}
+	return y
+}
+
+func HSLHistogramEqualizationConcurrent(fileName string, isLocal bool){
+	img, err := openImage(fileName, isLocal)
+
+	if err != nil {
+		panic(err)
+	}
+	defer img.Close()
+
+	decodedImg, _, err := image.Decode(img)
+	if err != nil {
+		panic(err)
+	}
+
+	bounds := decodedImg.Bounds()
+
+	// convert image from rgb to hsl, storing pixel values in arrays instead of temp Image
+	imgSize := bounds.Max.X * bounds.Max.Y
+	h_img := make([]float32, imgSize)
+	s_img := make([]float32, imgSize)
+	l_img := make([]uint8, imgSize)
+	a_img := make([]uint8, imgSize)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			r, g, b, a := decodedImg.At(x, y).RGBA()
+			// A color's RGBA method returns values in the range [0, 65535].
+			// Shifting by 8 reduces this to the range [0, 255].
+			r, g, b, a = r>>8, g>>8, b>>8, a>>8
+
+			h, s, l := rgb2hsl(uint8(r), uint8(g), uint8(b))
+			h_img[pixelVal(x,y, bounds)] = h
+			s_img[pixelVal(x,y, bounds)] = s
+			l_img[pixelVal(x,y, bounds)] = l
+			a_img[pixelVal(x,y, bounds)] = uint8(a) // save for later.
+		}
+	}
+
+	// create a lightness histogram
+	l_hist := [256]uint32{}
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			l_hist[l_img[pixelVal(x,y, bounds)]]++
+		}
+	}
+
+	// get lightness look up table
+	lLUT := getLookUpTable(l_hist, imgSize)
+
+	//generate new contrast enhanced image with lightness Look up tables
+	newImg := createNewImage(bounds)
+	//for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+	//	for x := bounds.Min.X; x < bounds.Max.X; x++ {
+	//		// convert back to rgb with hsl values
+	//		r,g,b := hsl2rgb(
+	//			h_img[pixelVal(x,y,bounds)],
+	//			s_img[pixelVal(x,y,bounds)],
+	//			lLUT[l_img[pixelVal(x,y,bounds)]],  // new lightness value
+	//			)
+	//
+	//
+	//		newImg.Set(x,y, color.RGBA{
+	//			R: r,
+	//			G: g,
+	//			B: b,
+	//			A: a_img[pixelVal(x,y, bounds)],
+	//		})
+	//	}
+	//}
+
+	wg := sync.WaitGroup{}
+	wg.Add(numThreads)
+
+	imgWorker := func(start, end int) {
+		defer wg.Done()
+		for y := start; y < end; y++ {
+			for x := bounds.Min.X; x < bounds.Max.X; x++ {
+				r,g,b := hsl2rgb(
+					h_img[pixelVal(x,y,bounds)],
+					s_img[pixelVal(x,y,bounds)],
+					lLUT[l_img[pixelVal(x,y,bounds)]],  // new lightness value
+				)
+
+
+			newImg.Set(x,y, color.RGBA{
+				R: r,
+				G: g,
+				B: b,
+				A: a_img[pixelVal(x,y, bounds)],
+				})
+			}
+		}
+	}
+
+	start := 0
+	chunkSize := bounds.Max.Y / numThreads
+	for i := 0 ; i < numThreads ; i ++ {
+		end := min(start + chunkSize, bounds.Max.Y)
+		go imgWorker(start, end)
+		start = start + chunkSize
+
+	}
+
+	wg.Wait()
+
+
+
+	f , imgError := writeImage(fileName, "enhanced-HSL-", isLocal)
+	defer f.Close()
+	if imgError != nil {
+		panic(imgError)
+	}
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer f.Close()
+	err = jpeg.Encode(f, newImg, &jpeg.Options{jpeg.DefaultQuality})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func HSLHistogramEqualizationSerial(fileName string, isLocal bool){
 	img, err := openImage(fileName, isLocal)
 
 	if err != nil {
@@ -233,7 +367,7 @@ func HSLHistogramEquilization(fileName string, isLocal bool){
 	}
 }
 
-func YUVHistogramEquilization(fileName string, isLocal bool){
+func YUVHistogramEqualization(fileName string, isLocal bool){
 	img, err := openImage(fileName, isLocal)
 
 	if err != nil {
@@ -318,7 +452,7 @@ func createNewImage(bounds image.Rectangle) *image.RGBA64{
 }
 
 // RGB contrast enhancement
-func RGBHistogramEquilization(fileName string, isLocal bool){
+func RGBHistogramEqualization(fileName string, isLocal bool){
 	img, err := openImage(fileName, isLocal)
 
 	if err != nil {
