@@ -20,16 +20,10 @@ func ContrastEnhancement(fileName string, isLocal bool){
 		}
 	}
 
-	// RGB
-	go contrastEnhancementFunc(RGBHistogramEquilization)
-
-	// YUV
-	go contrastEnhancementFunc(YUVHistogramEquilization)
-
-	// HSL
-	go contrastEnhancementFunc(HSLHistogramEquilization)
-
+	contrastFuncs := [3]interface{}{RGBHistogramEquilization, YUVHistogramEquilization, HSLHistogramEquilization}
+	for fn := range contrastFuncs {
+		go contrastEnhancementFunc(fn)
+	}
 
 	wg.Wait()
-
 }

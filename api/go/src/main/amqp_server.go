@@ -4,10 +4,10 @@
 package main
 
 import (
+	"../image"
 	"encoding/json"
 	"github.com/streadway/amqp"
 	"log"
-	"../image"
 )
 
 func failOnError(err error, msg string) {
