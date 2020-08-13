@@ -80,9 +80,6 @@ export default function ImgMediaCard(props) {
         <Button size="small" color="primary" onClick={uploadImage}>
           Upload
         </Button>
-        <Button size="small" color="primary">
-          Download
-        </Button>
       </CardActions>
     </Card>
   );

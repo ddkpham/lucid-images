@@ -14,3 +14,7 @@
   flex-wrap: wrap;
   justify-content: space-evenly;
 }
+
+.App-enhanced-image-title {
+  margin-top: 40px;
+}

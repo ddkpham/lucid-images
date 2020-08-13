@@ -23,6 +23,7 @@ class DemoRpcClient(object):
             auto_ack=True)
 
     def on_response(self, ch, method, props, body):
+        # check if the response belongs to the request
         if self.corr_id == props.correlation_id:
             self.response = json.loads(body.decode('utf-8'))
 

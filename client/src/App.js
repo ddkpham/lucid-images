@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import "./App.css";
 import AppBar from "./components/AppBar";
 import UploadCard from "./components/UploadCard";
@@ -26,12 +26,21 @@ function App() {
         <UploadCard />
       </div>
       {enhancedImage ? (
-        <div className="App-enhanced-image-container">
-          <ImageCard image={enhancedImage} format={"RGB"} isOriginal={true} />
-          <ImageCard image={enhancedImage} format={"RGB"} />
-          <ImageCard image={enhancedImage} format={"YUV"} />
-          <ImageCard image={enhancedImage} format={"HSL"} />
-        </div>
+        <Fragment>
+          <div className="App-enhanced-image-title">
+            {" "}
+            <Typography variant="h4" color="inherit">
+              {" "}
+              Contrast Enhancement Results
+            </Typography>{" "}
+          </div>
+          <div className="App-enhanced-image-container">
+            <ImageCard image={enhancedImage} format={"RGB"} isOriginal={true} />
+            <ImageCard image={enhancedImage} format={"RGB"} />
+            <ImageCard image={enhancedImage} format={"YUV"} />
+            <ImageCard image={enhancedImage} format={"HSL"} />
+          </div>
+        </Fragment>
       ) : null}
     </div>
   );
