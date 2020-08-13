@@ -15,6 +15,10 @@ const useStyles = makeStyles({
   root: {
     maxWidth: 500,
   },
+  btnContainer: {
+    display: "flex",
+    justifyContent: "center",
+  },
 });
 
 export default function ImgMediaCard(props) {
@@ -40,7 +44,10 @@ export default function ImgMediaCard(props) {
   const uploadImage = async () => {
     const url = `${apiURL}/enhance`;
     const body = { image: file };
-    if (file) {
+    if (
+      file &&
+      (file.includes(".png") || file.includes(".jpg") || file.includes(".jpeg"))
+    ) {
       try {
         localStorage.setItem("enhancedImage", file);
         const response = await postCall(url, body);
@@ -53,7 +60,7 @@ export default function ImgMediaCard(props) {
         console.log("error in enhancing image", err);
       }
     } else {
-      alert("Please select a file");
+      alert("Please select a png / jpeg file");
     }
   };
 
@@ -76,7 +83,7 @@ export default function ImgMediaCard(props) {
           <input type="file" onChange={fileSelectedHandler} />
         </CardContent>
       </CardActionArea>
-      <CardActions>
+      <CardActions className={classes.btnContainer}>
         <Button size="small" color="primary" onClick={uploadImage}>
           Upload
         </Button>

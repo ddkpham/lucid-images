@@ -8,7 +8,7 @@ ubuntu_version = '18.04'
 username = 'vagrant'
 user_home = '/home/' + username
 project_home = user_home + '/project/demos' # you may need to change the working directory to match your project
-
+clientwd = '/home/vagrant/project/client'
 
 python3_packages = '/usr/local/lib/python3.6/dist-packages'
 ruby_gems = '/var/lib/gems/2.5.0/gems/'
@@ -128,15 +128,26 @@ end
 
 # install node modules 
 execute 'npm install' do 
-  cwd '/home/vagrant/project/client'
+  cwd clientwd
   command '/usr/bin/npm install'
 end
+
+# install pm2 to manage node service
+execute 'Install pm2' do
+  cwd "/home/vagrant"
+  command '/usr/bin/npm install pm2 -g'
+ end
 
 # try running app with a bash resource
 bash 'start react app' do 
   user 'root'
-  cwd '/home/vagrant/project/client'
+  cwd clientwd
   code <<-EOH
-    npm start &
+    pm2 start npm -- start
   EOH
 end
+
+
+
+
+
