@@ -7,21 +7,24 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
+	"strings"
 
 	_ "golang.org/x/image/webp"
 )
 
-var VagrantImageDir string = "/home/vagrant/project/client/public/"
+const VagrantImageDir string = "/home/vagrant/project/client/public/"
 var VagrantGoPath string = "/home/vagrant/project/api/go/src/main"
 
 func getFullPath(fileName string, isLocal bool) string {
-	imageDir := "/src/image/"
+	// imageDir := "/src/image/"
 	workDir, err := os.Getwd()
-	fmt.Println("workDir: ", workDir)
+	rootDir := strings.Split(workDir, "src")[0]
+	imgDir := rootDir + "/src/image/"
+
 	if err != nil {
 		panic(err)
 	}
-	imgPath := workDir + imageDir + fileName // locally
+	imgPath := imgDir + fileName // locally
 	if !isLocal { // in VM
 		imgPath = VagrantImageDir + fileName
 	}
