@@ -127,11 +127,11 @@ execute 'go get golang.org/x/image/webp' do
 end
 
 # install golang assert library 
-execute 'go get github.com/stretchr/testify/assert' do 
-  user 'root'
-  cwd '/home/vagrant/project/api/go/src/main'
-  command '/usr/bin/go get github.com/stretchr/testify/assert'
-end
+# execute 'go get github.com/stretchr/testify/assert' do 
+#   user 'root'
+#   cwd '/home/vagrant/project/api/go/src/main'
+#   command '/usr/bin/go get github.com/stretchr/testify/assert'
+# end
 
 # install node modules 
 execute 'npm install' do 
