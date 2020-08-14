@@ -7,7 +7,7 @@ import (
 
 func main() {
     fmt.Println("Running enhancement!")
-    fileName := "couple.jpg"
+    fileName := "boat.jpeg"
     // jpeg images
     format, err := image.GuessImageFormat(fileName, true)
     if err != nil {

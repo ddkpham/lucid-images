@@ -13,8 +13,10 @@ import (
 )
 
 
-// Feel free to change this.
-const numThreads int = 12
+// Feel free to change this. There should be a sub-linear increase in speed as this is increased up
+// until a point. That point is some combination of thread creation / management overhead and when
+// num threads > Go's run time environment's kernel threads > number of available processors.
+const numThreads int = 8
 
 func pixelVal(x, y int, rectangle image.Rectangle) uint {
 	return uint(y * rectangle.Max.X + x)
@@ -160,6 +162,7 @@ func min(x, y int) int{
 	return y
 }
 
+// Worker function runner.
 func runImageWorkers(worker interface{}, bounds image.Rectangle) {
 	switch worker.(type) {
 	case func(int, int):
@@ -173,6 +176,9 @@ func runImageWorkers(worker interface{}, bounds image.Rectangle) {
 	}
 }
 
+// Contrast enhancement using HSL (Hue, Saturation, and Lightness) color model.
+// This is the concurrent version of the function. A sequential one is included
+// for comparison... and because I wrote it first.
 func HSLHistogramEqualizationConcurrent(fileName string, isLocal bool){
 	img, err := openImage(fileName, isLocal)
 
@@ -223,9 +229,30 @@ func HSLHistogramEqualizationConcurrent(fileName string, isLocal bool){
 
 	// create a lightness histogram
 	l_hist := [256]uint32{}
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			l_hist[l_img[pixelVal(x,y, bounds)]]++
+	wg = sync.WaitGroup{}
+	wg.Add(numThreads)
+
+	// set up thread histogram datastructure
+	workerLHistogram := [numThreads][256]uint32{}
+
+	histogramWorker := func(start, end int) {
+		defer wg.Done()
+		chunkSize := bounds.Max.Y / numThreads
+		id := start / chunkSize
+		for y := start; y < end ; y++ {
+			for x := bounds.Min.X; x < bounds.Max.X; x++ {
+				workerLHistogram[id][l_img[pixelVal(x,y, bounds)]]++
+			}
+		}
+	}
+
+	runImageWorkers(histogramWorker, bounds)
+	wg.Wait()
+
+	// combine results from worker threads
+	for _ , histogram := range workerLHistogram {
+		for idx, count := range histogram {
+			l_hist[idx] += count
 		}
 	}
 
@@ -364,6 +391,7 @@ func HSLHistogramEqualizationSerial(fileName string, isLocal bool){
 	}
 }
 
+
 func YUVHistogramEqualizationSerial(fileName string, isLocal bool){
 	img, err := openImage(fileName, isLocal)
 
@@ -440,6 +468,11 @@ func YUVHistogramEqualizationSerial(fileName string, isLocal bool){
 		panic(err)
 	}
 }
+
+// Contrast enhancement using YUV color space. The Y encodes the luma
+// component while UV are the other two chrominance components called
+// blue projection and red projection respectively. This is the
+// current version.
 func YUVHistogramEqualizationConcurrent(fileName string, isLocal bool){
 	img, err := openImage(fileName, isLocal)
 
@@ -490,9 +523,35 @@ func YUVHistogramEqualizationConcurrent(fileName string, isLocal bool){
 	// We are actually only interested in Y channel (Luminance) for contrast enhancement.
 	// 2 chrominance components may be ignored.
 	y_hist := [256]uint32{}
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			y_hist[y_img[pixelVal(x,y, bounds)]]++
+	//for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+	//	for x := bounds.Min.X; x < bounds.Max.X; x++ {
+	//		y_hist[y_img[pixelVal(x,y, bounds)]]++
+	//	}
+	//}
+	wg = sync.WaitGroup{}
+	wg.Add(numThreads)
+
+	// set up thread histogram datastructure
+	workerYHistogram := [numThreads][256]uint32{}
+
+	histogramWorker := func(start, end int) {
+		defer wg.Done()
+		chunkSize := bounds.Max.Y / numThreads
+		id := start / chunkSize
+		for y := start; y < end ; y++ {
+			for x := bounds.Min.X; x < bounds.Max.X; x++ {
+				workerYHistogram[id][y_img[pixelVal(x,y, bounds)]]++
+			}
+		}
+	}
+
+	runImageWorkers(histogramWorker, bounds)
+	wg.Wait()
+
+	// combine results from worker threads
+	for _ , histogram := range workerYHistogram {
+		for idx, count := range histogram {
+			y_hist[idx] += count
 		}
 	}
 
@@ -613,7 +672,7 @@ func RGBHistogramEqualizationSerial(fileName string, isLocal bool){
 	}
 }
 
-// Concurrent RGB contrast enhancement
+// Concurrent RGB contrast enhancement using the basic RGB model
 func RGBHistogramEqualizationConcurrent(fileName string, isLocal bool){
 	img, err := openImage(fileName, isLocal)
 
@@ -729,7 +788,9 @@ func writeImage(fileName string,  prefix string, isLocal bool,) (*os.File, error
 	return f, err
 }
 
-// create conversion values by constructing look up table with CDF
+// create conversion values by constructing look up table with CDF. This process
+// requires calculating the CDF. This is a bad candidate for concurrency
+// because  each value CDF(n), relies on CDF(n-1)
 func getLookUpTable(histogram [256]uint32, imageSize int) [256]uint8 {
 	// construct look up table by caluclating CDF
 	sum := uint64(0)
