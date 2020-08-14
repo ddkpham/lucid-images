@@ -6,6 +6,7 @@ package main
 import (
 	"../image"
 	"encoding/json"
+	"fmt"
 	"github.com/streadway/amqp"
 	"log"
 )
@@ -16,9 +17,12 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func get_length(request map[string]string) map[string]int {
-	s := request["image"]
-	return map[string]int{"length": len(s)}
+func get_response(request map[string]string, err error) map[string]string {
+	fmt.Println(request)
+	if err != nil {
+		return map[string]string{"message": "error in contrast enhancement. check image format"}
+	}
+	return map[string]string{"message": "success!"}
 }
 
 func main() {
@@ -67,8 +71,8 @@ func main() {
 			failOnError(err, "Failed to convert body")
 
 			log.Printf("%s", request)
-			image.ContrastEnhancement(request["image"], false)
-			response := get_length(request)
+			err := image.ContrastEnhancement(request["image"], false)
+			response := get_response(request, err)
 			body, _ := json.Marshal(response)
 
 			err = ch.Publish(

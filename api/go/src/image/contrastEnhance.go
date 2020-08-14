@@ -1,19 +1,20 @@
 package image
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 )
 
 
-func ContrastEnhancement(fileName string, isLocal bool){
+func ContrastEnhancement(fileName string, isLocal bool) error {
 	fmt.Println("Enhancing contrast with...", fileName)
 	format, _ := GuessImageFormat(fileName, isLocal)
 	fmt.Println("format: ", format)
 
 	if !(format == "jpeg" || format == "png") {
 		fmt.Println("file must be png or jpeg... ", format)
-		return
+		return errors.New("file must be png or jpeg... ")
 	}
 
 	wg := sync.WaitGroup{}
@@ -43,4 +44,5 @@ func ContrastEnhancement(fileName string, isLocal bool){
 	}
 
 	wg.Wait()
+	return nil
 }
