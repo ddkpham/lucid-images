@@ -15,7 +15,7 @@ function App() {
       <div className="title">
         <Typography variant="h4" color="inherit">
           {" "}
-          Lucid Images
+          Lucid Luminator
         </Typography>
         <Typography variant="h6" color="inherit">
           {" "}

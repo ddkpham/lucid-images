@@ -77,8 +77,8 @@ export default function ImgMediaCard(props) {
         />
         <CardContent>
           <Typography gutterBottom variant="h5" component="h2">
-            Please select images from the $root/client/public folder. Feel free
-            to add your own jpeg/png images.
+            Please select images from the $projectroot/client/public folder.
+            Feel free to add your own jpeg/png images.
           </Typography>
           <input type="file" onChange={fileSelectedHandler} />
         </CardContent>
