@@ -13,8 +13,9 @@ import (
 )
 
 
-
+// Feel free to change this.
 var numThreads int = 4
+
 func pixelVal(x, y int, rectangle image.Rectangle) uint {
 	return uint(y * rectangle.Max.X + x)
 }
@@ -160,6 +161,19 @@ func min(x, y int) int{
 	return y
 }
 
+func runImageWorkers(worker interface{}, bounds image.Rectangle) {
+	switch worker.(type) {
+	case func(int, int):
+		start := 0
+		chunkSize := bounds.Max.Y / numThreads
+		for i := 0 ; i < numThreads ; i ++ {
+			end := min(start + chunkSize, bounds.Max.Y)
+			go worker.(func(int,int))(start, end)
+			start = start + chunkSize
+		}
+	}
+}
+
 func HSLHistogramEqualizationConcurrent(fileName string, isLocal bool){
 	img, err := openImage(fileName, isLocal)
 
@@ -181,20 +195,32 @@ func HSLHistogramEqualizationConcurrent(fileName string, isLocal bool){
 	s_img := make([]float32, imgSize)
 	l_img := make([]uint8, imgSize)
 	a_img := make([]uint8, imgSize)
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			r, g, b, a := decodedImg.At(x, y).RGBA()
-			// A color's RGBA method returns values in the range [0, 65535].
-			// Shifting by 8 reduces this to the range [0, 255].
-			r, g, b, a = r>>8, g>>8, b>>8, a>>8
 
-			h, s, l := rgb2hsl(uint8(r), uint8(g), uint8(b))
-			h_img[pixelVal(x,y, bounds)] = h
-			s_img[pixelVal(x,y, bounds)] = s
-			l_img[pixelVal(x,y, bounds)] = l
-			a_img[pixelVal(x,y, bounds)] = uint8(a) // save for later.
+
+	wg := sync.WaitGroup{}
+	wg.Add(numThreads)
+
+	conversionWorkers := func(start, end int) {
+		defer wg.Done()
+		for y := start; y < end; y ++ {
+			for x := bounds.Min.X; x < bounds.Max.X ; x++ {
+				r, g, b, a := decodedImg.At(x, y).RGBA()
+				// A color's RGBA method returns values in the range [0, 65535].
+				// Shifting by 8 reduces this to the range [0, 255].
+				r, g, b, a = r>>8, g>>8, b>>8, a>>8
+
+				h, s, l := rgb2hsl(uint8(r), uint8(g), uint8(b))
+				h_img[pixelVal(x,y, bounds)] = h
+				s_img[pixelVal(x,y, bounds)] = s
+				l_img[pixelVal(x,y, bounds)] = l
+				a_img[pixelVal(x,y, bounds)] = uint8(a) // save for later.
+			}
 		}
 	}
+
+	runImageWorkers(conversionWorkers, bounds)
+	wg.Wait()
+
 
 	// create a lightness histogram
 	l_hist := [256]uint32{}
@@ -209,29 +235,11 @@ func HSLHistogramEqualizationConcurrent(fileName string, isLocal bool){
 
 	//generate new contrast enhanced image with lightness Look up tables
 	newImg := createNewImage(bounds)
-	//for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-	//	for x := bounds.Min.X; x < bounds.Max.X; x++ {
-	//		// convert back to rgb with hsl values
-	//		r,g,b := hsl2rgb(
-	//			h_img[pixelVal(x,y,bounds)],
-	//			s_img[pixelVal(x,y,bounds)],
-	//			lLUT[l_img[pixelVal(x,y,bounds)]],  // new lightness value
-	//			)
-	//
-	//
-	//		newImg.Set(x,y, color.RGBA{
-	//			R: r,
-	//			G: g,
-	//			B: b,
-	//			A: a_img[pixelVal(x,y, bounds)],
-	//		})
-	//	}
-	//}
 
-	wg := sync.WaitGroup{}
+	wg = sync.WaitGroup{}
 	wg.Add(numThreads)
 
-	imgWorker := func(start, end int) {
+	imgWriteWorker := func(start, end int) {
 		defer wg.Done()
 		for y := start; y < end; y++ {
 			for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -252,18 +260,8 @@ func HSLHistogramEqualizationConcurrent(fileName string, isLocal bool){
 		}
 	}
 
-	start := 0
-	chunkSize := bounds.Max.Y / numThreads
-	for i := 0 ; i < numThreads ; i ++ {
-		end := min(start + chunkSize, bounds.Max.Y)
-		go imgWorker(start, end)
-		start = start + chunkSize
-
-	}
-
+	runImageWorkers(imgWriteWorker, bounds)
 	wg.Wait()
-
-
 
 	f , imgError := writeImage(fileName, "enhanced-HSL-", isLocal)
 	defer f.Close()
@@ -452,7 +450,78 @@ func createNewImage(bounds image.Rectangle) *image.RGBA64{
 }
 
 // RGB contrast enhancement
-func RGBHistogramEqualization(fileName string, isLocal bool){
+func RGBHistogramEqualizationSerial(fileName string, isLocal bool){
+	img, err := openImage(fileName, isLocal)
+
+	if err != nil {
+		panic(err)
+	}
+	defer img.Close()
+
+	decodedImg, _, err := image.Decode(img)
+	if err != nil {
+		panic(err)
+	}
+
+	bounds := decodedImg.Bounds()
+
+	// generate histogram for each RGB channel.
+	rHistogram, gHistogram, bHistogram := [256]uint32{}, [256]uint32{}, [256]uint32{}
+
+	// An image's bounds do not necessarily start at (0, 0), so the two loops start
+	// at bounds.Min.Y and bounds.Min.X. Looping over Y first and X second is more
+	// likely to result in better memory access patterns than X first and Y second.
+	// https://golang.org/pkg/image/
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			r, g, b, a := decodedImg.At(x, y).RGBA()
+
+			// A color's RGBA method returns values in the range [0, 65535].
+			// Shifting by 8 reduces this to the range [0, 255].
+			// 2^16 / 2^8 -> 2^8
+			r, g, b, a = r>>8, g>>8, b>>8, a>>8
+			rHistogram[r]++
+			gHistogram[g]++
+			bHistogram[b]++
+		}
+	}
+
+	// construct the Look Up Table for rgb values
+	imgSize := bounds.Max.Y * bounds.Max.X
+	rLUT := getLookUpTable(rHistogram, imgSize)
+	gLUT := getLookUpTable(gHistogram, imgSize)
+	bLUT := getLookUpTable(bHistogram, imgSize)
+
+	//generate new contrast enhanced image with Look up tables
+	newImg := createNewImage(bounds)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			r, g, b, a := decodedImg.At(x, y).RGBA()
+			r, g, b, a = r>>8, g>>8, b>>8, a>>8
+			newImg.Set(x,y, color.RGBA{
+				R: rLUT[r],
+				G: gLUT[g],
+				B: bLUT[b],
+				A: uint8(a),
+			})
+		}
+	}
+
+	f , imgError := writeImage(fileName, "enhanced-RGB-", isLocal)
+	defer f.Close()
+	if imgError != nil {
+		panic(imgError)
+	}
+
+	//err = png.Encode(f, newImg)
+	err = jpeg.Encode(f, newImg, &jpeg.Options{jpeg.DefaultQuality})
+	if err != nil {
+		panic(err)
+	}
+}
+
+// RGB contrast enhancement
+func RGBHistogramEqualizationConcurrent(fileName string, isLocal bool){
 	img, err := openImage(fileName, isLocal)
 
 	if err != nil {

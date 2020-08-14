@@ -26,7 +26,7 @@ func ContrastEnhancement(fileName string, isLocal bool){
 		}
 	}
 
-	contrastFuncs := [3]interface{}{RGBHistogramEqualization, YUVHistogramEqualization, HSLHistogramEqualizationSerial}
+	contrastFuncs := [3]interface{}{RGBHistogramEqualizationConcurrent, YUVHistogramEqualization, HSLHistogramEqualizationConcurrent}
 	for _, fn := range contrastFuncs {
 		go contrastEnhancementFunc(fn)
 	}
