@@ -14,12 +14,11 @@ import (
 
 
 // Feel free to change this.
-const numThreads int = 4
+const numThreads int = 12
 
 func pixelVal(x, y int, rectangle image.Rectangle) uint {
 	return uint(y * rectangle.Max.X + x)
 }
-
 
 func maximum(r,g,b float32) float32 {
 	max := r
@@ -365,7 +364,7 @@ func HSLHistogramEqualizationSerial(fileName string, isLocal bool){
 	}
 }
 
-func YUVHistogramEqualization(fileName string, isLocal bool){
+func YUVHistogramEqualizationSerial(fileName string, isLocal bool){
 	img, err := openImage(fileName, isLocal)
 
 	if err != nil {
@@ -428,6 +427,100 @@ func YUVHistogramEqualization(fileName string, isLocal bool){
 			})
 		}
 	}
+
+	f , imgError := writeImage(fileName, "enhanced-YUV-", isLocal)
+	defer f.Close()
+	if imgError != nil {
+		panic(imgError)
+	}
+
+	//err = png.Encode(f, newImg)
+	err = jpeg.Encode(f, newImg, &jpeg.Options{jpeg.DefaultQuality})
+	if err != nil {
+		panic(err)
+	}
+}
+func YUVHistogramEqualizationConcurrent(fileName string, isLocal bool){
+	img, err := openImage(fileName, isLocal)
+
+	if err != nil {
+		panic(err)
+	}
+	defer img.Close()
+
+	decodedImg, _, err := image.Decode(img)
+	if err != nil {
+		panic(err)
+	}
+
+	bounds := decodedImg.Bounds()
+
+	// convert image from rgb to yuv
+	imgSize := bounds.Max.X * bounds.Max.Y
+
+	// instead of creating a temp yuv image, lets keep track of the pixel values in arrays.
+	y_img := make([]uint8, imgSize)
+	cb_img := make([]uint8, imgSize)
+	cr_img := make([]uint8, imgSize)
+	a_img := make([]uint8, imgSize)
+
+	wg := sync.WaitGroup{}
+	wg.Add(numThreads)
+
+	conversionWorkers := func(start, end int) {
+		defer wg.Done()
+		for y := start; y < end; y ++ {
+			for x := bounds.Min.X; x < bounds.Max.X ; x++ {
+				r, g, b, a := decodedImg.At(x, y).RGBA()
+				// A color's RGBA method returns values in the range [0, 65535].
+				// Shifting by 8 reduces this to the range [0, 255].
+				r, g, b, a = r>>8, g>>8, b>>8, a>>8
+
+				Y, cb, cr := color.RGBToYCbCr(uint8(r), uint8(g), uint8(b))
+				y_img[pixelVal(x,y, bounds)] = Y
+				cb_img[pixelVal(x,y, bounds)] = cb
+				cr_img[pixelVal(x,y, bounds)] = cr
+				a_img[pixelVal(x,y, bounds)] = uint8(a)
+			}
+		}
+	}
+	runImageWorkers(conversionWorkers, bounds)
+	wg.Wait()
+
+	// We are actually only interested in Y channel (Luminance) for contrast enhancement.
+	// 2 chrominance components may be ignored.
+	y_hist := [256]uint32{}
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			y_hist[y_img[pixelVal(x,y, bounds)]]++
+		}
+	}
+
+	yLUT := getLookUpTable(y_hist, imgSize)
+
+	//generate new contrast enhanced image with y Look up tables
+	newImg := createNewImage(bounds)
+
+	wg = sync.WaitGroup{}
+	wg.Add(numThreads)
+
+	imgWriteWorker := func(start, end int) {
+		defer wg.Done()
+		for y := start; y < end; y++ {
+			for x := bounds.Min.X; x < bounds.Max.X; x++ {
+				r,g,b := color.YCbCrToRGB(yLUT[y_img[pixelVal(x,y, bounds)]], cb_img[pixelVal(x,y, bounds)], cr_img[pixelVal(x,y, bounds)])
+				newImg.Set(x,y, color.RGBA{
+					R: r,
+					G: g,
+					B: b,
+					A: a_img[pixelVal(x,y, bounds)],
+				})
+			}
+		}
+	}
+
+	runImageWorkers(imgWriteWorker, bounds)
+	wg.Wait()
 
 	f , imgError := writeImage(fileName, "enhanced-YUV-", isLocal)
 	defer f.Close()
