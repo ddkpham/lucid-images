@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "installing go libraries"
+
+echo "installing amqp..."
+go get github.com/streadway/amqp
+
+echo "installing webp..."
+go get golang.org/x/image/webp
+
+echo "installation completed."

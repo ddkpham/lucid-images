@@ -109,10 +109,10 @@ execute 'pip3 install flask' do
 end
 
 #set the root directory of go folder as GOPATh
-execute 'export GOPATH=`pwd`' do 
-  cwd '/home/vagrant/project/api/go'
-  command 'export GOPATH=`pwd`'
-end
+# execute 'export GOPATH=`pwd`' do 
+#   cwd '/home/vagrant/project/api/go'
+#   command 'export GOPATH=`pwd`'
+# end
 
 # install rabit mq 
 execute 'go get github.com/streadway/amqp' do 
@@ -124,6 +124,20 @@ end
 execute 'go get golang.org/x/image/webp' do 
   cwd '/home/vagrant/project/api/go/src/main'
   command '/usr/bin/go get golang.org/x/image/webp'
+end
+
+bash 'install go libraries' do 
+  user 'root'
+  cwd '/home/vagrant/project/api/go/src/main'
+  code <<-EOH
+    go get github.com/streadway/amqp
+    go get golang.org/x/image/webp
+  EOH
+end   
+
+execute 'bash install' do 
+  cwd '/home/vagrant/project/api/go/src/main'
+  command '/bin/bash install'
 end
 
 # install golang assert library 
