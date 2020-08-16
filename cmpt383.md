@@ -118,7 +118,7 @@ For me on a mac, the folder location looks something like
 `/Users/davidpham/Documents/cmpt383/polyglot-project/client/public`
 
 For convenience, I have uploaded a couple images. Ones that I found
-particular interesting and high lighted some of the strengths and weaknesses
+particular interesting and highlighted some of the strengths and weaknesses
 of histogram equalization on different color models were:
 
 - backyard.jpeg

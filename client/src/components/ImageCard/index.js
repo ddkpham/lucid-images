@@ -30,7 +30,7 @@ export default function ImageCard(props) {
           {image.split(".")[0]}
         </Typography>
         <Typography variant="body2" color="textSecondary" component="p">
-          {isOriginal ? "Original" : `${format} histogram equilization`}
+          {isOriginal ? "Original" : `${format} histogram equalization`}
         </Typography>
       </CardContent>
       <CardActionArea>
