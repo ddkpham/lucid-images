@@ -11,7 +11,7 @@ There are many techniques to do this. Lucid Luminator performs contrast enhancem
 using histogram equalization.
 
 Histogram Equalization is a common approach for enhancing contrast and brightness with grayscale
-images. Extending this to color images is not a straight forward task.
+images. Extending this to color images is not a straightforward task.
 
 I chose to apply this technique to 3 different color spaces, RGB, YUV, and HSL.
 Each model leverages a different perceptual attribute, and has a different effect on contrast enhancement.
@@ -31,7 +31,7 @@ YUV | HSL, perform histogram equalization and convert back to the RGB color spac
 was in the details. This was especially painful for HSL (Go's color package does not have a
 built in conversion method like it does for YUV :( ). HSL histogram equalization was performed
 on saturation for each hue in the image taking into account the maximum allowable saturation
-for a given luminence. This makes the saturation a function of both hue and luminance. This
+for a given luminance. This makes the saturation a function of both hue and luminance. This
 technique was developed by Hague, Weeks and Myler[Hague 1994]. It helps reduce the number of
 out-of-gamut colors (colors that don't have a direct conversion from one gamut to another)
 and color artifacts.
@@ -45,7 +45,7 @@ technique may better suit the original poorly contrasted image.
 ### Languages / parts of systems were implemented with what
 
 I chose to use a fast system language for image processing (contrast enhancement). Go
-was a natural choice because of it's native support for concurrency. The second part to
+was a natural choice because of its native support for concurrency. The second challenge to
 these contrast enhancement algorithms was to write concurrent versions of them. There
 is often ample opportunity to make speed improvements to image processing algorithms
 due to their embarrassingly parallel workload. Histogram enhancement is no exception.
@@ -104,7 +104,7 @@ Once VM is finished provision stage. SSH into VM.
 
 4. Start up Flask server and client rabbitMQ
 
-open another teriminal and ssh in.
+open another terminal and ssh in.
 `vagrant ssh`
 `cd /home/vagrant/project/api`
 `python3 app.py`
