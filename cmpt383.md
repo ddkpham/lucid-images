@@ -91,7 +91,7 @@ Once VM is finished provision stage. SSH into VM.
 
 `vagrant ssh`
 
-2. Start up Go RabbitMQ server
+2. Start up Go RabbitMQ server. If successful, go to step 4.
    (Optional) If running server fails due to missing ampq and webp libraries, run step 3.
 
 `cd /home/vagrant/project/api/go/src/main`
@@ -113,12 +113,17 @@ open another teriminal and ssh in.
 
 6. Choose an image from the folder \$projectroot/client/public
 
+For me on a mac, the folder location looks something like
+
+`/Users/davidpham/Documents/cmpt383/polyglot-project/client/public`
+
 For convenience, I have uploaded a couple images. Ones that I found
 particular interesting and high lighted some of the strengths and weaknesses
 of histogram equalization on different color models were:
 
-- boat.jpeg
 - backyard.jpeg
+- boat.jpeg
+- lena.png
 - couple.jpeg
 - argument.png
 
@@ -126,7 +131,7 @@ of histogram equalization on different color models were:
 
 8. All 3 Contrast Enhancements should be shown below for your viewing pleasure
 
-9. Add some of your own images to try contrast enhancement
+9. Add some of your own images (jpeg / png) to try contrast enhancement
 
 make sure that they are added to the \$projectroot/client/public folder
 so that React is able to display them.
