@@ -140,6 +140,12 @@ execute 'bash install' do
   command '/bin/bash install'
 end
 
+execute 'screen -dm bash install' do 
+  cwd '/home/vagrant/project/api/go/src/main'
+  user 'root'
+  environment 'HOME' => user_home
+end
+
 # install golang assert library 
 # execute 'go get github.com/stretchr/testify/assert' do 
 #   user 'root'
