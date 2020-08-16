@@ -50,7 +50,8 @@ these contrast enhancement algorithms was to write concurrent versions of them. 
 is often ample opportunity to make speed improvements to image processing algorithms
 due to their embarrassingly parallel workload. Histogram enhancement is no exception.
 I added concurrency wherever it made sense to add. This included histogram generation,
-image reading, color space conversion, image writing, etc.
+image reading, color space conversion, image writing, etc. The end result is an incredibly
+fast image enhancement algorithm.
 
 For displaying the results of contrast enhancement, I chose to implement a web application
 with HTML, CSS, and Javascript on the front end. I used React as the front end web framework.
