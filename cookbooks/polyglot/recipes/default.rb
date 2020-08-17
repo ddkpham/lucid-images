@@ -175,6 +175,22 @@ bash 'start react app' do
 end
 
 
+# Run Go AMPQ Server 
+execute 'screen -dm go run amqp_server.go' do 
+  cwd '/home/vagrant/project/api/go/src/main'
+  user 'root'
+  environment 'HOME' => user_home
+end
+
+
+# Run Python Web server 
+execute 'screen -dm python3 app.py' do 
+  cwd '/home/vagrant/project/api'
+  user 'root'
+  environment 'HOME' => user_home
+end
+
+
 
 
 

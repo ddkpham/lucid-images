@@ -2,8 +2,6 @@
 
 ### Overall goal of project
 
-What is the overall goal of the project (i.e. what does it do, or what problem is it solving)?
-
 Lucid Luminator is a simple web application that uses several different color models/spaces and
 perceptual attributes to perform contrast enhancement. Contrast enhancement is a technique used
 to increase the visibility between two adjacent objects or reveal richer detail in an image.
@@ -26,7 +24,7 @@ enhancement in 1987. Histogram equalization in the RGB color space leaves color 
 is because of its poor correlation with the human visual system, requiring a color space transformation.
 This lead me to implement an additional two algorithms for color spaces, HSL and YUV.
 
-The algorithm at a high level is rather simple. Convert the image from RGB color space to
+The algorithm at a high level is rather simple. Convert the source image from RGB color space to
 YUV | HSL, perform histogram equalization and convert back to the RGB color space. The difficulty
 was in the details. This was especially painful for HSL (Go's color package does not have a
 built in conversion method like it does for YUV :( ). HSL histogram equalization was performed
@@ -64,14 +62,14 @@ it along to go image processing service where all the computational heavy liftin
 ### Methods of communication
 
 There are two main methods of communication between the 3 different language modules. The first
-is with a RPC REST server. The browser makes HTTP requests on behalf of the front end code to
-a python web server. The python web server is running a RabbitMQ message queue client. The web
+is with a `RPC REST server`. The browser makes HTTP requests on behalf of the front end code to
+a python web server. The python web server is running a `RabbitMQ message queue` client. The web
 server packages this request and places it onto the RabbitMQ queue to the Go image processing
 server. From here, the Go image web server accepts the incoming message and performs the desired
 computation. Once finished, the web server returns whether or not the request was processed successfully.
 The images are written into React's public directory. This is so React can render
 the images (React is not allowed to access files outside of its src directory expect files in
-the public folder). The overall system design is web-queue worker.
+the public folder). The overall system architecture design is a web-queue worker.
 
 Webqueue-worker definition:
 
@@ -91,7 +89,7 @@ Once VM is finished provision stage. SSH into VM.
 
 `vagrant ssh`
 
-2. Start up Go RabbitMQ server. If successful, go to step 4.
+2. Start up Go RabbitMQ server. If successful, (You should see "Awaiting RPC requests") go to step 4.
    (Optional) If running server fails due to missing ampq and webp libraries, run step 3.
 
 `cd /home/vagrant/project/api/go/src/main`
@@ -111,7 +109,7 @@ open another terminal and ssh in.
 
 5. Navigate to http://localhost:8080/
 
-6. Choose an image from the folder \$projectroot/client/public
+6. Click "choose file" and choose an image from the folder \$projectroot/client/public
 
 For me on a mac, the folder location looks something like
 
@@ -135,3 +133,9 @@ of histogram equalization on different color models were:
 
 make sure that they are added to the \$projectroot/client/public folder
 so that React is able to display them.
+
+10. If you like, you can also go into \$projectroot/api/go/src/image/histogram.go
+    There is a global constant variable called `numThreads` which is the number of
+    threads for the routine. Feel free to change this to play with the system. However,
+    you must stop and restart the RPC client / server to see the changes. You must also
+    start the server and client in the same order. Go RPC server -> Python client web server.
