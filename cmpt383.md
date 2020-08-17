@@ -85,31 +85,12 @@ going into the vagrant file and changing the port forwarding configuration.
 
 `vagrant up`
 
-Once VM is finished provision stage. SSH into VM.
+This should install all dependencies, start up web server for static files, start up python
+API, and go image processing RPC server.
 
-`vagrant ssh`
+2. Navigate to http://localhost:8080/ (May take a second to load initially)
 
-2. Start up Go RabbitMQ server. If successful, (You should see "Awaiting RPC requests") go to step 4.
-   (Optional) If running server fails due to missing ampq and webp libraries, run step 3.
-
-`cd /home/vagrant/project/api/go/src/main`
-`go run amqp_server.go`
-
-3. Install libraries with bash script in same folder (Skip if server is able to run)
-
-`bash install`
-`go run amqp_server.go`
-
-4. Start up Flask server and client rabbitMQ
-
-open another terminal and ssh in.
-`vagrant ssh`
-`cd /home/vagrant/project/api`
-`python3 app.py`
-
-5. Navigate to http://localhost:8080/
-
-6. Click "choose file" and choose an image from the folder \$projectroot/client/public
+3. Click "choose file" and choose an image from the folder \$projectroot/client/public
 
 For me on a mac, the folder location looks something like
 
@@ -125,17 +106,45 @@ of histogram equalization on different color models were:
 - couple.jpeg
 - argument.png
 
-7. Click upload image
+4. Click upload image
 
-8. All 3 Contrast Enhancements should be shown below for your viewing pleasure
+5. All 3 Contrast Enhancements should be shown below for your viewing pleasure
 
-9. Add some of your own images (jpeg / png) to try contrast enhancement
+6. Add some of your own images (jpeg / png) to try contrast enhancement
 
 make sure that they are added to the \$projectroot/client/public folder
 so that React is able to display them.
 
-10. If you like, you can also go into \$projectroot/api/go/src/image/histogram.go
-    There is a global constant variable called `numThreads` which is the number of
-    threads for the routine. Feel free to change this to play with the system. However,
-    you must stop and restart the RPC client / server to see the changes. You must also
-    start the server and client in the same order. Go RPC server -> Python client web server.
+7. If you like, you can also go into \$projectroot/api/go/src/image/histogram.go
+   There is a global constant variable called `numThreads` which is the number of
+   threads for the routine. Feel free to change this to play with the system. However,
+   you must stop and restart the RPC client / server to see the changes. You must also
+   start the server and client in the same order. Go RPC server -> Python client web server.
+
+### DEBUGGING STEPS
+
+If you are having trouble running the application, try these steps. You may have to run the application
+manually. Feel free to email me if you are having issues `dpa35@sfu.ca`. You may have to start the go
+server and python server manually. PM2 is managing my front end server so we do not have to worry about that.
+
+`vagrant ssh`
+
+1. Start up Go RabbitMQ server. If successful, (You should see "Awaiting RPC requests") go to step 4.
+   (Optional) If running server fails due to missing ampq and webp libraries, run step 3.
+
+`cd /home/vagrant/project/api/go/src/main`
+`go run amqp_server.go`
+
+2. Install libraries with bash script in same folder (Skip if server is able to run)
+
+`bash install`
+`go run amqp_server.go`
+
+3. Start up Flask server and client rabbitMQ
+
+open another terminal and ssh in.
+`vagrant ssh`
+`cd /home/vagrant/project/api`
+`python3 app.py`
+
+4. Navigate to http://localhost:8080/
