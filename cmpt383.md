@@ -127,6 +127,13 @@ If you are having trouble running the application, try these steps. You may have
 manually. Feel free to email me if you are having issues `dpa35@sfu.ca`. You may have to start the go
 server and python server manually. PM2 is managing my front end server so we do not have to worry about that.
 
+comment out lines 178 - 191 of chef script in `cookbooks/polyglot/recipes/default.rb`. These are lines
+associated with running both the go server and python server.
+
+Re-provision VM.
+
+`vagrant provision`
+
 `vagrant ssh`
 
 1. Start up Go RabbitMQ server. If successful, (You should see "Awaiting RPC requests") go to step 4.
